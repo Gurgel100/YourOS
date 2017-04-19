@@ -1,0 +1,9 @@
+[submodule "src/Bootloader"]
+	path = src/Bootloader
+	url = https://github.com/Gurgel100/Bootloader.git
+[submodule "src/Kernel"]
+	path = src/Kernel
+	url = https://github.com/Gurgel100/Kernel.git
+[submodule "src/Programs"]
+	path = src/Programs
+	url = https://github.com/Gurgel100/Programs.git

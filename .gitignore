@@ -1,0 +1,14 @@
+*.iso
+*.hdd
+*.log
+*.S
+
+crosstools/env
+crosstools/crosstools_installed
+
+#Bochs stuff
+bx_enh_dbg.ini
+
+#Eclipse stuff
+.metadata
+RemoteSystemsTempFiles

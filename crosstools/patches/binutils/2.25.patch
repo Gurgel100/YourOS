@@ -1,0 +1,324 @@
+diff --git a/bfd/config.bfd b/bfd/config.bfd
+index 7bcb92a..863cedf 100644
+--- a/bfd/config.bfd
++++ b/bfd/config.bfd
+@@ -692,6 +692,11 @@ case "${targ}" in
+     targ_defvec=x86_64_elf64_vec
+     want64=true
+     ;;
++  x86_64-*-youros*)
++	targ_defvec=x86_64_elf64_vec
++	targ_selfvecs="x86_64_elf64_vec"
++	want64=true
++	;;
+ #endif
+   i[3-7]86-*-lynxos*)
+     targ_defvec=i386_elf32_vec
+diff --git a/config.sub b/config.sub
+index 88a0cb4..d8568ba 100755
+--- a/config.sub
++++ b/config.sub
+@@ -118,7 +118,7 @@ case $maybe_os in
+   nto-qnx* | linux-gnu* | linux-android* | linux-dietlibc | linux-newlib* | \
+   linux-musl* | linux-uclibc* | uclinux-uclibc* | uclinux-gnu* | kfreebsd*-gnu* | \
+   knetbsd*-gnu* | netbsd*-gnu* | \
+-  kopensolaris*-gnu* | \
++  kopensolaris*-gnu* | youros* | \
+   storm-chaos* | os2-emx* | rtmk-nova*)
+     os=-$maybe_os
+     basic_machine=`echo $1 | sed 's/^\(.*\)-\([^-]*-[^-]*\)$/\1/'`
+@@ -1505,6 +1505,9 @@ case $os in
+ 	-*mint | -mint[0-9]* | -*MiNT | -MiNT[0-9]*)
+ 		os=-mint
+ 		;;
++	-youros*)
++		os=-youros
++		;;
+ 	-aros*)
+ 		os=-aros
+ 		;;
+diff --git a/gas/configure.tgt b/gas/configure.tgt
+index d07d445..ed07476 100644
+--- a/gas/configure.tgt
++++ b/gas/configure.tgt
+@@ -276,6 +276,7 @@ case ${generic_target} in
+   i386-*-chaos)				fmt=elf ;;
+   i386-*-rdos*)				fmt=elf ;;
+   i386-*-darwin*)			fmt=macho ;;
++  i386-*-youros*)			fmt=elf ;;
+ 
+   i860-*-*)				fmt=elf endian=little ;;
+ 
+diff --git a/ld/Makefile.am b/ld/Makefile.am
+index 9575f1f..3007f1f 100644
+--- a/ld/Makefile.am
++++ b/ld/Makefile.am
+@@ -1926,6 +1926,10 @@ eelf_x86_64_sol2.c: $(srcdir)/emulparams/elf_x86_64_sol2.sh \
+   $(srcdir)/emultempl/solaris2.em \
+   $(ELF_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
+ 
++eelf_x86_64_youros.c: $(srcdir)/emulparams/elf_x86_64_youros.sh \
++  $(ELF_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
++	${GENSCRIPTS} elf_x86_64_youros "$(tdir_elf_x86_64_youros)"
++
+ ehppa64linux.c: $(srcdir)/emulparams/hppa64linux.sh \
+   $(ELF_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
+ 
+diff --git a/ld/Makefile.in b/ld/Makefile.in
+index 9f56ca1..fc52e38 100644
+--- a/ld/Makefile.in
++++ b/ld/Makefile.in
+@@ -787,6 +787,7 @@ ALL_64_EMULATION_SOURCES = \
+ 	eelf_x86_64_fbsd.c \
+ 	eelf_x86_64_nacl.c \
+ 	eelf_x86_64_sol2.c \
++	eelf_x86_64_youros.c \
+ 	ehppa64linux.c \
+ 	ei386pep.c \
+ 	emmo.c \
+@@ -3367,6 +3368,9 @@ eelf_x86_64_sol2.c: $(srcdir)/emulparams/elf_x86_64_sol2.sh \
+   $(srcdir)/emultempl/solaris2.em \
+   $(ELF_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
+ 
++eelf_x86_64_youros.c: $(srcdir)/emulparams/elf_x86_64_youros.sh \
++  $(ELF_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
++
+ ehppa64linux.c: $(srcdir)/emulparams/hppa64linux.sh \
+   $(ELF_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
+ 
+diff --git a/ld/configure.tgt b/ld/configure.tgt
+index 24e36d1..6ba4a94 100644
+--- a/ld/configure.tgt
++++ b/ld/configure.tgt
+@@ -284,6 +284,10 @@ x86_64-*-netbsd*)	targ_emul=elf_x86_64
+ 			esac ;;
+ i[3-7]86-*-netware)	targ_emul=i386nw ;;
+ i[3-7]86-*-elf*)	targ_emul=elf_i386 ;;
++x86_64-*-youros*)
++			targ_emul=elf_x86_64_youros
++			targ_extra_emuls="elf_x86_64"
++			;;
+ x86_64-*-elf*)		targ_emul=elf_x86_64
+ 			targ_extra_emuls="elf_i386 elf32_x86_64 elf_l1om elf_k1om"
+ 			targ_extra_libpath="elf_i386 elf32_x86_64 elf_l1om elf_k1om"
+@@ -828,6 +832,10 @@ i[03-9x]86-*-cygwin* | x86_64-*-cygwin*)
+ *-*-linux*)
+   ;;
+ 
++*-*-youros*)
++  NATIVE_LIB_DIRS='/lib'
++  ;;
++
+ *-*-netbsd*)
+   ;;
+ 
+diff --git a/ld/emulparams/elf_x86_64_youros.sh b/ld/emulparams/elf_x86_64_youros.sh
+new file mode 100644
+index 0000000..c7b0a82
+--- /dev/null
++++ b/ld/emulparams/elf_x86_64_youros.sh
+@@ -0,0 +1,2 @@
++. ${srcdir}/emulparams/elf_x86_64.sh
++TEXT_START_ADDR=0x8000000000
+diff --git a/libiberty/Makefile.in b/libiberty/Makefile.in
+index 9b87720..ac24a57 100644
+--- a/libiberty/Makefile.in
++++ b/libiberty/Makefile.in
+@@ -142,7 +142,7 @@ CFILES = alloca.c argv.c asprintf.c atexit.c				\
+ 	objalloc.c obstack.c						\
+ 	partition.c pexecute.c						\
+ 	 pex-common.c pex-djgpp.c pex-msdos.c pex-one.c			\
+-	 pex-unix.c pex-win32.c						\
++	 pex-unix.c pex-win32.c	pex-youros.c					\
+          physmem.c putenv.c						\
+ 	random.c regex.c rename.c rindex.c				\
+ 	safe-ctype.c setenv.c setproctitle.c sha1.c sigsetmask.c        \
+@@ -1118,6 +1118,13 @@ $(CONFIGURED_OFILES): stamp-picdir stamp-noasandir
+ 	else true; fi
+ 	$(COMPILE.c) $(srcdir)/pex-win32.c $(OUTPUT_OPTION)
+ 
++./pex-youros.$(objext): $(srcdir)/pex-youros.c stamp-h $(INCDIR)/ansidecl.h \
++	$(INCDIR)/libiberty.h $(srcdir)/pexx-common.h
++	if [ x"$(PICFLAG)" != x]; then \
++	  $(COMPILE.c) $(PICFLAG) $(srcdir)/pex-youros.c -o pic/$@; \
++	else true; fi
++	$(COMPILE.c) $(srcdir)/pex-youros.c $(OUTPUT_OPTION)
++
+ ./pexecute.$(objext): $(srcdir)/pexecute.c config.h $(INCDIR)/ansidecl.h \
+ 	$(INCDIR)/libiberty.h
+ 	if [ x"$(PICFLAG)" != x ]; then \
+diff --git a/libiberty/configure b/libiberty/configure
+index 96feaed..59e1160 100755
+--- a/libiberty/configure
++++ b/libiberty/configure
+@@ -6647,6 +6647,7 @@ case "${host}" in
+      *-*-mingw* | *-*-winnt*)	pexecute=pex-win32  ;;
+      *-*-msdosdjgpp*)		pexecute=pex-djgpp  ;;
+      *-*-msdos*)		pexecute=pex-msdos  ;;
++     *-*-youros*)		pexecute=pex-youros.o  ;;
+      *)				pexecute=pex-unix   ;;
+ esac
+ 
+diff --git a/libiberty/configure.ac b/libiberty/configure.ac
+index 3380819..45ce817 100644
+--- a/libiberty/configure.ac
++++ b/libiberty/configure.ac
+@@ -679,6 +679,7 @@ case "${host}" in
+      *-*-mingw* | *-*-winnt*)	pexecute=pex-win32  ;;
+      *-*-msdosdjgpp*)		pexecute=pex-djgpp  ;;
+      *-*-msdos*)		pexecute=pex-msdos  ;;
++	 *-*-youros*)		pexecute=pex-youros.o  ;;
+      *)				pexecute=pex-unix   ;;
+ esac
+ AC_SUBST(pexecute)
+diff --git a/libiberty/pex-youros.c b/libiberty/pex-youros.c
+new file mode 100644
+index 0000000..4ffd38b
+--- /dev/null
++++ b/libiberty/pex-youros.c
+@@ -0,0 +1,145 @@
++/* Utilities to execute a program in a subprocess (possibly linked by pipes
++   with other subprocesses), and wait for it.  Generic Unix version
++   (also used for UWIN and VMS).
++   Copyright (C) 1996, 1997, 1998, 1999, 2000, 2001, 2003, 2004, 2005, 2009,
++   2010 Free Software Foundation, Inc.
++
++This file is part of the libiberty library.
++Libiberty is free software; you can redistribute it and/or
++modify it under the terms of the GNU Library General Public
++License as published by the Free Software Foundation; either
++version 2 of the License, or (at your option) any later version.
++
++Libiberty is distributed in the hope that it will be useful,
++but WITHOUT ANY WARRANTY; without even the implied warranty of
++MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++Library General Public License for more details.
++
++You should have received a copy of the GNU Library General Public
++License along with libiberty; see the file COPYING.LIB.  If not,
++write to the Free Software Foundation, Inc., 51 Franklin Street - Fifth Floor,
++Boston, MA 02110-1301, USA.  */
++
++#include "config.h"
++#include "libiberty.h"
++#include "pex-common.h"
++
++#include <stdio.h>
++#include <signal.h>
++#include <errno.h>
++#ifdef NEED_DECLARATION_ERRNO
++extern int errno;
++#endif
++#ifdef HAVE_STDLIB_H
++#include <stdlib.h>
++#endif
++#ifdef HAVE_STRING_H
++#include <string.h>
++#endif
++#ifdef HAVE_UNISTD_H
++#include <unistd.h>
++#endif
++
++#include <sys/types.h>
++
++#ifdef HAVE_FCNTL_H
++#include <fcntl.h>
++#endif
++#ifdef HAVE_SYS_WAIT_H
++#include <sys/wait.h>
++#endif
++#ifdef HAVE_GETRUSAGE
++#include <sys/time.h>
++#include <sys/resource.h>
++#endif
++#ifdef HAVE_SYS_STAT_H
++#include <sys/stat.h>
++#endif
++#ifdef HAVE_PROCESS_H
++#include <process.h>
++#endif
++
++static int pex_youros_open_read(struct pex_obj*, const char*, int);
++static int pex_youros_open_write(struct pex_obj*, const char*, int);
++static long pex_youros_exec_child(struct pex_obj*, int, const char*,
++						char*, const*, char* const*, int, int, int, int,
++						const char**, int*);
++static int pex_youros_close(struct pex_obj*, int);
++static int pex_youros_wait(struct pex_obj*, long, int*, struct pex_time*,
++						int, const char**, int*);
++static int pex_youros_pipe(struct pex_obj*, int*, int);
++static FILE* pex_youros_fdopenr(struct pex_obj*, int, int);
++static FILE* pex_youros_fdopenw(struct pex_obj*, int, int);
++static void pex_youros_cleanup(struct pex_obj*);
++
++/* The list of functions we pass to the common routines */
++
++const struct prex_funcs funcs =
++{
++	pex_youros_open_read,
++	pex_youros_open_write,
++	pex_youros_exec_child,
++	pex_youros_close,
++	pex_youros_wait,
++	NULL,
++	NULL,
++	NULL,
++	NULL
++};
++
++/* Return a newly initialized pex_obj structure. */
++
++struct pex_obj* pex_init(int flags, const char* pname, const char* tempbase)
++{
++	return pex_init_common(flags, pname, tempbase, &funcs);
++}
++
++/* Open a file for reading. */
++
++static int pex_youros_open_read(struct pex_obj* obj ATTRIBUTE_UNUSED,
++		const char* name, int binary ATTRIBUTE_UNUSED)
++{
++	return open(name, O_RDONLY);
++}
++
++/* Open a file for writing. */
++
++static int pex_youros_open_write(struct pex_obj* obj ATTRIBUTE_UNUSED,
++		const char* name, int binary ATTRIBUTE_UNUSED)
++{
++	return open(name, O_WRONLY | O_CREAT | O_TRUNC);
++}
++
++/* Close a file. */
++
++static int pex_youros_close(struct pex_obj* obj ATTRIBUTE_UNUSED, int fd)
++{
++	return close(fd);
++}
++
++/* Execute a child. */
++
++static long pex_youros_exec_child(struct pex_obj* obj, int flags,
++		const char* executable, char* const* argv, char* const* env,
++		int in, int out, int errdes, int toclose, const char** errmsg, int* err)
++{
++	// TODO
++	return -1;
++}
++
++/* Wait for a child process to complete. */
++
++static int pex_youros_wait(struct pex_obj* obj, long pid, int* status,
++		struct pex_time* time, int done, const char** errmsg, int* err)
++{
++	/*	If we are cleaning up when the caller didn't retrieve process
++		status for some reason, encourage the process to go away. */
++	if(done)
++		kill(pid, SIGTERM);
++
++	// TODO
++	while(get_parent_pid(pid) != 0);
++	*status = 0;
++	return 0;
++}
++
