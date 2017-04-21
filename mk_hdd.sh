@@ -56,7 +56,7 @@ sudo chmod 777 -R ${MOUNT_PATH}
 cp -r ${INPUT}/* ${MOUNT_PATH}
 
 #Install grub
-sudo grub-install --root-directory=${MOUNT_PATH} --no-floppy ${LOOP_DEV}
+sudo grub-install --root-directory=${MOUNT_PATH} --no-floppy --modules="normal part_msdos ext2 multiboot" ${LOOP_DEV}
 
 #Cleanup
 sudo umount ${MOUNT_PATH}
