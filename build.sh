@@ -11,7 +11,7 @@ TOOLCHAIN_DIR=${CROSSTOOLS_DIR}/env
 BOOTLOADER_SRC=${CURRENT_DIR}/src/Bootloader
 KERNEL_SRC=${CURRENT_DIR}/src/Kernel
 PROG_SRC=${CURRENT_DIR}/src/Programs
-OUTPUT=${CURRENT_DIR}/YourOS.iso
+OUTPUT=${CURRENT_DIR}/YourOS
 CONFIG_DIR=${CURRENT_DIR}/configs
 ERROR_OPT=false
 REBUILD=false
@@ -84,7 +84,7 @@ export PATH=${PATH}:${TOOLCHAIN_DIR}/bin
 #Create tmp and build directory
 TMPDIR=`mktemp -d`
 LOGDIR=${TMPDIR}
-ISO_FILES=${TMPDIR}/iso
+IMG_FILES=${TMPDIR}/files
 
 echo "Temp dir is ${TMPDIR}"
 
@@ -126,20 +126,21 @@ fi
 make -j ${CORES} ${MAKE_TARGET} || die "Error during building of programs"
 PROG_BINS=${PROG_SRC}/bin
 
-echo "Generating ISO file..."
-
 #Prepare for iso generation
-mkdir -p ${ISO_FILES}/boot/grub
-mkdir ${ISO_FILES}/bin
+mkdir -p ${IMG_FILES}/boot/grub
+mkdir ${IMG_FILES}/bin
 
+cp ${CONFIG_DIR}/grub.cfg ${IMG_FILES}/boot/grub/grub.cfg
+cp ${BOOTLOADER_BIN} ${IMG_FILES}/bootloader
+cp ${KERNEL_BIN} ${IMG_FILES}/kernel
+cp ${PROG_BINS}/* ${IMG_FILES}/bin/
+cp ${CONFIG_DIR}/init.ini ${IMG_FILES}/init.ini
 
-cp ${CONFIG_DIR}/grub.cfg ${ISO_FILES}/boot/grub/grub.cfg
-cp ${BOOTLOADER_BIN} ${ISO_FILES}/bootloader
-cp ${KERNEL_BIN} ${ISO_FILES}/kernel
-cp ${PROG_BINS}/* ${ISO_FILES}/bin/
-cp ${CONFIG_DIR}/init.ini ${ISO_FILES}/init.ini
+echo "Generating ISO file..."
+${CURRENT_DIR}/mk_iso.sh ${IMG_FILES} ${OUTPUT}.iso > ${LOGDIR}/mkrescue.txt 2>&1 || die "Error while creating iso"
 
-${CURRENT_DIR}/mk_iso.sh ${ISO_FILES} ${OUTPUT} > ${LOGDIR}/mkrescue.txt 2>&1 || die "Error while creating iso"
+echo "Generating hd image..."
+${CURRENT_DIR}/mk_hdd.sh ${IMG_FILES} ${OUTPUT}.hdd 104857600 ${TMPDIR}
 
 if [ ${DISASSEMBLE} = true ]; then
 	echo "Disassembling..."
