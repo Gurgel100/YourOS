@@ -6,7 +6,7 @@ OSPATH=
 
 #Versionen
 BINUTILS_VERSION=2.26
-GCC_VERSION=5.1.0
+GCC_VERSION=5.5.0
 NEEDS_GMP_MAJOR=4
 NEEDS_GMP_MINOR=2
 NEEDS_GMP_PATCHLEVEL=0
@@ -218,7 +218,7 @@ cd ${TMP}/cross-binutils
 echo "[binutils] Version " ${BINUTILS_VERSION}
 if ! [ -e binutils-${BINUTILS_VERSION} ]; then
 	echo "[binutils] Herunterladen..."
-	[ -f binutils-${BINUTILS_VERSION}.tar.bz2 ] || wget -q http://ftp.gnu.org/gnu/binutils/binutils-${BINUTILS_VERSION}.tar.bz2 || die "Fehler beim Herunterladen."
+	[ -f binutils-${BINUTILS_VERSION}.tar.bz2 ] || wget -q https://ftp.gnu.org/gnu/binutils/binutils-${BINUTILS_VERSION}.tar.bz2 || die "Fehler beim Herunterladen."
 	echo "[binutils] Entpacken..."
 	tar -xjf binutils-${BINUTILS_VERSION}.tar.bz2 || die "Fehler beim Entpacken."
 	echo "[binutils] Patch anwenden..."
@@ -266,9 +266,9 @@ cd ${TMP}/cross-gcc
 echo "[gcc] Version " ${GCC_VERSION}
 if ! [ -e gcc-${GCC_VERSION} ]; then
 	echo "[gcc] Herunterladen..."
-	[ -f gcc-${GCC_VERSION}.tar.bz2 ] || wget -q ftp://ftp.gnu.org/gnu/gcc/gcc-${GCC_VERSION}/gcc-${GCC_VERSION}.tar.bz2 || die "Fehler beim Herunterladen."
+	[ -f gcc-${GCC_VERSION}.tar.gz ] || wget -q https://ftp.gnu.org/gnu/gcc/gcc-${GCC_VERSION}/gcc-${GCC_VERSION}.tar.gz || die "Fehler beim Herunterladen."
 	echo "[gcc] Entpacken..."
-	tar -xjf gcc-${GCC_VERSION}.tar.bz2 || die "Fehler beim Entpacken."
+	tar -xf gcc-${GCC_VERSION}.tar.gz || die "Fehler beim Entpacken."
 
 	# GCC patchen
 	echo "[gcc] Patch anwenden..."
@@ -279,7 +279,7 @@ fi
 if ! [ -z ${BUILD_GMP} ] && ! [ -e ${TMP}/cross-gcc/gcc-${GCC_VERSION}/gmp ]; then
   echo "[gmp] Version " ${GMP_VERSION}
   echo "[gmp] Herunterladen..."
-  [ -f gmp-${GMP_VERSION}.tar.bz2 ] || wget -q ftp://ftp.gmplib.org/pub/gmp-${GMP_VERSION}/gmp-${GMP_VERSION}.tar.bz2 || die "Fehler beim Herunterladen."
+  [ -f gmp-${GMP_VERSION}.tar.bz2 ] || wget -q https://ftp.gnu.org/gnu/gmp/gmp-${GMP_VERSION}.tar.bz2 || die "Fehler beim Herunterladen."
   echo "[gmp] Entpacken..."
   (tar -xjf gmp-${GMP_VERSION}.tar.bz2 && mv gmp-${GMP_VERSION} ${TMP}/cross-gcc/gcc-${GCC_VERSION}/gmp ) || die "Fehler beim Entpacken."
 fi
@@ -287,7 +287,7 @@ fi
 if ! [ -z ${BUILD_MPFR} ] && ! [ -e ${TMP}/cross-gcc/gcc-${GCC_VERSION}/mpfr ]; then
   echo "[mpfr] Version " ${MPFR_VERSION}
   echo "[mpfr] Herunterladen..."
-  [ -f mpfr-${MPFR_VERSION}.tar.bz2 ] || wget -q http://www.mpfr.org/mpfr-${MPFR_VERSION}/mpfr-${MPFR_VERSION}.tar.bz2 || die "Fehler beim Herunterladen."
+  [ -f mpfr-${MPFR_VERSION}.tar.bz2 ] || wget -q https://www.mpfr.org/mpfr-${MPFR_VERSION}/mpfr-${MPFR_VERSION}.tar.bz2 || die "Fehler beim Herunterladen."
   echo "[mpfr] Entpacken..."
   (tar -xjf mpfr-${MPFR_VERSION}.tar.bz2 && mv mpfr-${MPFR_VERSION} ${TMP}/cross-gcc/gcc-${GCC_VERSION}/mpfr ) || die "Fehler beim Entpacken."
 fi
@@ -295,7 +295,7 @@ fi
 if ! [ -z ${BUILD_MPC} ] && ! [ -e ${TMP}/cross-gcc/gcc-${GCC_VERSION}/mpc ]; then
   echo "[mpc] Version " ${MPC_VERSION}
   echo "[mpc] Herunterladen..."
-  [ -f mpc-${MPC_VERSION}.tar.gz ] || wget -q http://www.multiprecision.org/mpc/download/mpc-${MPC_VERSION}.tar.gz || die "Fehler beim Herunterladen."
+  [ -f mpc-${MPC_VERSION}.tar.gz ] || wget -q https://ftp.gnu.org/gnu/mpc/mpc-${MPC_VERSION}.tar.gz || die "Fehler beim Herunterladen."
   echo "[mpc] Entpacken..."
   (tar -xf mpc-${MPC_VERSION}.tar.gz && mv mpc-${MPC_VERSION} ${TMP}/cross-gcc/gcc-${GCC_VERSION}/mpc ) || die "Fehler beim Entpacken."
 fi
