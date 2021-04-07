@@ -1,0 +1,126 @@
+diff --git a/config.sub b/config.sub
+index 41146e11c..35df18429 100755
+--- a/config.sub
++++ b/config.sub
+@@ -117,7 +117,7 @@ case $maybe_os in
+   nto-qnx* | linux-gnu* | linux-android* | linux-dietlibc | linux-newlib* | \
+   linux-musl* | linux-uclibc* | uclinux-uclibc* | uclinux-gnu* | kfreebsd*-gnu* | \
+   knetbsd*-gnu* | netbsd*-gnu* | netbsd*-eabi* | \
+-  kopensolaris*-gnu* | \
++  kopensolaris*-gnu* | youros* | \
+   storm-chaos* | os2-emx* | rtmk-nova*)
+     os=-$maybe_os
+     basic_machine=`echo $1 | sed 's/^\(.*\)-\([^-]*-[^-]*\)$/\1/'`
+@@ -1533,6 +1533,9 @@ case $os in
+ 		;;
+ 	-none)
+ 		;;
++	-youros*)
++		os=-youros
++		;;
+ 	*)
+ 		# Get rid of the `-' at the beginning of $os.
+ 		os=`echo $os | sed 's/[^-]*-//'`
+diff --git a/fixincludes/mkfixinc.sh b/fixincludes/mkfixinc.sh
+index 0d96c8ca8..4d436ad97 100755
+--- a/fixincludes/mkfixinc.sh
++++ b/fixincludes/mkfixinc.sh
+@@ -11,6 +11,7 @@ target=fixinc.sh
+ 
+ # Check for special fix rules for particular targets
+ case $machine in
++	*-youros* | \
+     i?86-*-cygwin* | \
+     i?86-*-mingw32* | \
+     x86_64-*-mingw32* | \
+diff --git a/gcc/config.gcc b/gcc/config.gcc
+index bf3f32da0..9f9332395 100644
+--- a/gcc/config.gcc
++++ b/gcc/config.gcc
+@@ -904,6 +904,11 @@ case ${target} in
+     *) echo 'Unknown thread configuration for VxWorks'; exit 1 ;;
+   esac
+   ;;
++*-*-youros*)
++  gas=yes
++  gnu_ld=yes
++  default_use_cxa_atexit=no
++  ;;
+ *-*-elf|arc*-*-elf*)
+   # Assume that newlib is being used and so __cxa_atexit is provided.
+   default_use_cxa_atexit=yes
+@@ -1811,6 +1816,10 @@ i[34567]86-*-interix[3-9]*)
+ 		tm_file="${tm_file} dbxcoff.h"
+ 	fi
+ 	;;
++x86_64-*-youros*)
++	tm_file="${tm_file} i386/unix.h i386/att.h dbxelf.h elfos.h i386/i386elf.h i386/x86-64.h youros.h"
++	native_system_header_dir=/include
++	;;
+ ia64*-*-elf*)
+ 	tm_file="${tm_file} dbxelf.h elfos.h newlib-stdint.h ia64/sysv4.h ia64/elf.h"
+ 	tmake_file="ia64/t-ia64"
+diff --git a/gcc/config/youros.h b/gcc/config/youros.h
+new file mode 100644
+index 000000000..9222e3c8f
+--- /dev/null
++++ b/gcc/config/youros.h
+@@ -0,0 +1,26 @@
++/* Useful if you wish to make target-specific gcc changes. */
++#undef TARGET_YOUROS
++#define TARGET_YOUROS 1
++
++/* Default arguments you want when running your x86_64-youros-gcc toolchain */
++#define LIB_SPEC "-lc" /* link against C standard library */
++
++/* Provide start of programm */
++#undef STARTFILE_SPEC
++#define STARTFILE_SPEC "crt0.o%s"
++
++/* Provide end of programm */
++#undef ENDFILE_SPEC
++#define ENDFILE_SPEC ""
++
++/* Don't automatically add extern "C" { } around header files. */
++#undef NO_IMPLICIT_EXTERN_C
++#define NO_IMPLICIT_EXTERN_C 1
++
++/* Additional predefined macros. */
++#undef TARGET_OS_CPP_BUILTINS
++#define TARGET_OS_CPP_BUILTINS()		\
++	do {								\
++		builtin_define("__youros__");	\
++		builtin_assert("system=youros");\
++	} while(0);
+diff --git a/libgcc/config.host b/libgcc/config.host
+index 6f6810cf0..cfe281349 100644
+--- a/libgcc/config.host
++++ b/libgcc/config.host
+@@ -755,6 +755,10 @@ x86_64-*-mingw*)
+ 		extra_parts="$extra_parts vtv_start.o vtv_end.o vtv_start_preinit.o vtv_end_preinit.o"
+ 	fi
+ 	;;
++x86_64-*-youros*)
++	extra_parts="$extra_parts crtbegin.o crtend.o"
++	tmake_file="$tmake_file i386/t-crtstuff t-crtstuff-pic t-libgcc-pic"
++	;;
+ i[34567]86-*-interix[3-9]*)
+ 	tmake_file="$tmake_file i386/t-interix i386/t-chkstk"
+ 	;;
+diff --git a/libstdc++-v3/crossconfig.m4 b/libstdc++-v3/crossconfig.m4
+index ece125677..97e3eb805 100644
+--- a/libstdc++-v3/crossconfig.m4
++++ b/libstdc++-v3/crossconfig.m4
+@@ -270,6 +270,12 @@ case "${host}" in
+     AC_DEFINE(HAVE_TANF)
+     AC_DEFINE(HAVE_TANHF)
+     ;;
++  *-youros*)
++    GLIBCXX_CHECK_COMPILER_FEATURES
++    GLIBCXX_CHECK_LINKER_FEATURES
++    GLIBCXX_CHECK_MATH_SUPPORT
++    GLIBCXX_CHECK_STDLIB_SUPPORT
++	;;
+   *)
+     AC_MSG_ERROR([No support for this host/target combination.])
+    ;;
