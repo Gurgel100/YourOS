@@ -17,6 +17,8 @@ ERROR_OPT=false
 REBUILD=false
 DISASSEMBLE=false
 MAKE_TARGET=
+BUILD_DOCKER=false
+BUILD_IMAGE=false
 
 function die()
 {
@@ -28,19 +30,25 @@ function help()
 {
 	echo "Usage: build.sh [options]"
 	echo "Options:"
+	echo " -d	Build Docker container"
 	echo " -h	Display this information"
 	echo " -o	Output image name"
 	echo " -f	Rebuild all (but not the toolchain)"
 	echo " -s	Disassemble all binaries (useful for debugging)"
 	echo " -r	Make a release build (enable otpimizations)"
+	echo " -t	Set toolchain directory"
+	echo " -v	Additionally build a hard drive image"
 }
 
 #Start
 
 echo "YourOS builder V0.1"
 
-while getopts ":ho:frs" option; do
+while getopts ":dho:frst:v" option; do
 	case "${option}" in
+		d)
+			BUILD_DOCKER=true
+			;;
 		o)
 			OUTPUT=${OPTARG}
 			;;
@@ -56,6 +64,12 @@ while getopts ":ho:frs" option; do
 			;;
 		r)
 			MAKE_TARGET=release
+			;;
+		t)
+			TOOLCHAIN_DIR=${OPTARG}
+			;;
+		v)
+			BUILD_IMAGE=true
 			;;
 		\?)
 			echo "Invalid option -${OPTARG}" >&2
@@ -88,8 +102,23 @@ IMG_FILES=${TMPDIR}/files
 
 echo "Temp dir is ${TMPDIR}"
 
+if [ ${BUILD_DOCKER} = true ]; then
+	echo "Building Docker container..."
+	INCLUDE_DIR=${CROSSTOOLS_DIR}/include
+	mkdir -p ${INCLUDE_DIR} \
+	&& make -C ${KERNEL_SRC} SYSROOT_DIR=${CROSSTOOLS_DIR} install-headers \
+	&& docker build --pull -t youros ${CROSSTOOLS_DIR}
+	rm -r ${INCLUDE_DIR}
+else
+
 echo "Checking crosstools..."
-if ! [ -e ${CROSSTOOLS_DIR}/crosstools_installed ]; then
+if ! [[	\
+		-x "$(command -v x86_64-elf-gcc)"		\
+		&& -x "$(command -v x86_64-elf-ld)"		\
+		&& -x "$(command -v x86_64-pc-youros-gcc)"	\
+		&& -x "$(command -v x86_64-pc-youros-ld)"	\
+	]];
+then
 	cd ${CROSSTOOLS_DIR}
 	./build_crosstools.sh -k ${KERNEL_SRC} -d -c -t ${TMPDIR}/crosstools || die "Could not build crosstools"
 fi
@@ -140,14 +169,18 @@ cp ${CONFIG_DIR}/init.ini ${IMG_FILES}/init.ini
 echo "Generating ISO file..."
 ${CURRENT_DIR}/mk_iso.sh ${IMG_FILES} ${OUTPUT}.iso > ${LOGDIR}/mkrescue.txt 2>&1 || die "Error while creating iso"
 
-echo "Generating hd image..."
-${CURRENT_DIR}/mk_hdd.sh ${IMG_FILES} ${OUTPUT}.hdd 104857600 ${TMPDIR}
+if [ ${BUILD_IMAGE} = true ]; then
+	echo "Generating hd image..."
+	${CURRENT_DIR}/mk_hdd.sh ${IMG_FILES} ${OUTPUT}.hdd 104857600 ${TMPDIR}
+fi
 
 if [ ${DISASSEMBLE} = true ]; then
 	echo "Disassembling..."
 
 	${CROSSTOOLS_ELF_PREFIX}objdump -D -S ${BOOTLOADER_BIN} > ${CURRENT_DIR}/disassembly_boot.S
 	${CROSSTOOLS_ELF_PREFIX}objdump -D -S ${KERNEL_BIN} > ${CURRENT_DIR}/disassembly_kernel.S
+fi
+
 fi
 
 echo "Completed"

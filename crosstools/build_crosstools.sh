@@ -3,6 +3,7 @@
 CORES=`nproc`
 
 OSPATH=
+SKIP_HEADERS=false
 
 #Versionen
 BINUTILS_VERSION=2.26
@@ -52,6 +53,7 @@ function help()
 {
 	echo "Usage: build_crosstools.sh [options]"
 	echo "Options:"
+	echo " -d	Build for Docker container"
 	echo " -h	Display this information"
 	echo " -k	Kernel source path"
 	echo " -c	Clean up at the end"
@@ -60,8 +62,13 @@ function help()
 	echo " -f	Force building"
 }
 
-while getopts ":hk:cdft:i" option; do
+while getopts ":dhk:cdft:i" option; do
 	case "${option}" in
+		d)
+			PREFIX=/usr/local
+			SYSROOT_DIR=/usr/local/youros
+			SKIP_HEADERS=true
+			;;
 		k)
 			OSPATH=${OPTARG}
 			;;
@@ -99,7 +106,7 @@ fi
 
 LOGS=${TMP}
 
-[ -d ${OSPATH} ] || die "${OSPATH} ist kein Verzeichnis!"
+[[ ${SKIP_HEADERS} || -d ${OSPATH} ]] || die "${OSPATH} ist kein Verzeichnis!"
 [ -d ${PATCHES} ] || die "${PATCHES} nicht gefunden. Ist das Arbeitsverzeichnis korrekt?"
 
 (which as > /dev/null 2>&1) || die "as nicht installiert. Bitte das Paket 'binutils' installieren."
@@ -112,7 +119,7 @@ mkdir -p ${PREFIX}/include
 
 #cp -r ${OSPATH}/include ${PREFIX}
 #as -64 -o ${PREFIX}/lib/crt0.o ${OSPATH}/lib/start.S
-make -C ${OSPATH} SYSROOT_DIR=${PREFIX} install-headers
+[ ${SKIP_HEADERS} ] || make -C ${OSPATH} SYSROOT_DIR=${PREFIX} install-headers
 
 #
 # User nerven
@@ -232,7 +239,7 @@ fi
 if ! [ -f $PREFIX/bin/${TARGET_GENERIC}-ld ] || [ ${FORCE} = true ]; then
 cd build-generic
 echo "[binutils-generic] Konfigurieren..."
-../binutils-${BINUTILS_VERSION}/configure --prefix="${PREFIX}" --target=${TARGET_GENERIC} --with-sysroot=${PREFIX} --disable-nls ${BINUTILS_CONFIGURE_PARAMS} ${BINUTILS_CONFIGURE_PARAMS_GENERIC} >> ${LOGS}/binutils-generic.log || die "Fehler beim Konfigurieren.\nSiehe ${LOGS}/binutils-generic.log für Details."
+../binutils-${BINUTILS_VERSION}/configure --prefix="${PREFIX}" --target=${TARGET_GENERIC} --with-sysroot=${SYSROOT_DIR} --disable-nls ${BINUTILS_CONFIGURE_PARAMS} ${BINUTILS_CONFIGURE_PARAMS_GENERIC} >> ${LOGS}/binutils-generic.log || die "Fehler beim Konfigurieren.\nSiehe ${LOGS}/binutils-generic.log für Details."
 echo "[binutils-generic] Kompilieren..."
 make ${MAKEOPTS} &>> ${LOGS}/binutils-generic.log || die "Fehler beim Kompilieren.\nSiehe ${LOGS}/binutils-generic.log für Details."
 echo "[binutils-generic] Installieren..."
@@ -245,7 +252,7 @@ fi
 if ! [ -f $PREFIX/bin/${TARGET_YOUROS}-ld ] || [ ${FORCE} = true ]; then
 cd build-youros
 echo "[binutils-youros] Konfigurieren..."
-../binutils-${BINUTILS_VERSION}/configure --prefix="${PREFIX}" --target=${TARGET_YOUROS} --with-sysroot=${PREFIX} --disable-nls ${BINUTILS_CONFIGURE_PARAMS} ${BINUTILS_CONFIGURE_PARAMS_YOUROS} >> ${LOGS}/binutils-youros.log || die "Fehler beim Konfigurieren.\nSiehe ${LOGS}/binutils-youros.log für Details."
+../binutils-${BINUTILS_VERSION}/configure --prefix="${PREFIX}" --target=${TARGET_YOUROS} --with-sysroot=${SYSROOT_DIR} --disable-nls ${BINUTILS_CONFIGURE_PARAMS} ${BINUTILS_CONFIGURE_PARAMS_YOUROS} >> ${LOGS}/binutils-youros.log || die "Fehler beim Konfigurieren.\nSiehe ${LOGS}/binutils-youros.log für Details."
 echo "[binutils-youros] Kompilieren..."
 make ${MAKEOPTS} &>> ${LOGS}/binutils-youros.log || die "Fehler beim Kompilieren.\nSiehe ${LOGS}/binutils-youros.log für Details."
 echo "[binutils-youros] Installieren..."
@@ -326,7 +333,7 @@ if ! [ -f $PREFIX/bin/${TARGET_YOUROS}-gcc ] || [ ${FORCE} = true ]; then
 cd build-youros
 echo "[gcc-youros] Konfigurieren..."
 export MAKEINFO=missing
-../gcc-${GCC_VERSION}/configure --prefix="${PREFIX}" --target=${TARGET_YOUROS} --with-sysroot=${PREFIX} --disable-nls --enable-languages=c --disable-shared --disable-libssp ${GCC_CONFIGURE_PARAMS} ${GCC_CONFIGURE_PARAMS_YOUROS} &>> ${LOGS}/gcc-youros.log || die "Fehler beim Konfigurieren.\nSiehe ${LOGS}/gcc-youros.log für Details."
+../gcc-${GCC_VERSION}/configure --prefix="${PREFIX}" --target=${TARGET_YOUROS} --with-sysroot=${SYSROOT_DIR} --disable-nls --enable-languages=c --disable-shared --disable-libssp ${GCC_CONFIGURE_PARAMS} ${GCC_CONFIGURE_PARAMS_YOUROS} &>> ${LOGS}/gcc-youros.log || die "Fehler beim Konfigurieren.\nSiehe ${LOGS}/gcc-youros.log für Details."
 echo "[gcc-youros] Kompilieren..."
 make all-gcc ${MAKEOPTS} &>> ${LOGS}/gcc-youros.log || die "Fehler beim Kompilieren.\nSiehe ${LOGS}/gcc-youros.log für Details."
 echo "[gcc-youros] Kompilieren (libgcc)..."
@@ -343,6 +350,4 @@ if [ ${CLEANUP} = true ]; then
 	echo "Räume auf..."
 	rm -r -f ${TMP}/*
 fi
-
-touch ${CURRENT_DIR}/crosstools_installed
 
