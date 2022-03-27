@@ -129,6 +129,7 @@ PROG_BINS=${PROG_SRC}/bin
 #Prepare for iso generation
 mkdir -p ${IMG_FILES}/boot/grub
 mkdir ${IMG_FILES}/bin
+mkdir ${IMG_FILES}/dev
 
 cp ${CONFIG_DIR}/grub.cfg ${IMG_FILES}/boot/grub/grub.cfg
 cp ${BOOTLOADER_BIN} ${IMG_FILES}/bootloader
