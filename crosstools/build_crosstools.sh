@@ -29,9 +29,12 @@ TMP=${CURRENT_DIR}/tmp
 MAKEOPTS=-j${CORES}
 
 # interne Variablen
+BINUTILS_CONFIGURE_PARAMS=--disable-werror
+BINUTILS_CONFIGURE_PARAMS_GENERIC=
+BINUTILS_CONFIGURE_PARAMS_YOUROS=
 GCC_CONFIGURE_PARAMS=
 GCC_CONFIGURE_PARAMS_GENERIC=
-GCC_CONFIGURE_PARAMS_YOUROS=
+GCC_CONFIGURE_PARAMS_YOUROS=--enable-default-pie
 BUILD_GMP=
 BUILD_MPFR=
 BUILD_MPC=
@@ -229,7 +232,7 @@ fi
 if ! [ -f $PREFIX/bin/${TARGET_GENERIC}-ld ] || [ ${FORCE} = true ]; then
 cd build-generic
 echo "[binutils-generic] Konfigurieren..."
-../binutils-${BINUTILS_VERSION}/configure --prefix="${PREFIX}" --target=${TARGET_GENERIC} --with-sysroot=${PREFIX} --disable-nls >> ${LOGS}/binutils-generic.log || die "Fehler beim Konfigurieren.\nSiehe ${LOGS}/binutils-generic.log für Details."
+../binutils-${BINUTILS_VERSION}/configure --prefix="${PREFIX}" --target=${TARGET_GENERIC} --with-sysroot=${PREFIX} --disable-nls ${BINUTILS_CONFIGURE_PARAMS} ${BINUTILS_CONFIGURE_PARAMS_GENERIC} >> ${LOGS}/binutils-generic.log || die "Fehler beim Konfigurieren.\nSiehe ${LOGS}/binutils-generic.log für Details."
 echo "[binutils-generic] Kompilieren..."
 make ${MAKEOPTS} &>> ${LOGS}/binutils-generic.log || die "Fehler beim Kompilieren.\nSiehe ${LOGS}/binutils-generic.log für Details."
 echo "[binutils-generic] Installieren..."
@@ -242,7 +245,7 @@ fi
 if ! [ -f $PREFIX/bin/${TARGET_YOUROS}-ld ] || [ ${FORCE} = true ]; then
 cd build-youros
 echo "[binutils-youros] Konfigurieren..."
-../binutils-${BINUTILS_VERSION}/configure --prefix="${PREFIX}" --target=${TARGET_YOUROS} --with-sysroot=${PREFIX} --disable-nls >> ${LOGS}/binutils-youros.log || die "Fehler beim Konfigurieren.\nSiehe ${LOGS}/binutils-youros.log für Details."
+../binutils-${BINUTILS_VERSION}/configure --prefix="${PREFIX}" --target=${TARGET_YOUROS} --with-sysroot=${PREFIX} --disable-nls ${BINUTILS_CONFIGURE_PARAMS} ${BINUTILS_CONFIGURE_PARAMS_YOUROS} >> ${LOGS}/binutils-youros.log || die "Fehler beim Konfigurieren.\nSiehe ${LOGS}/binutils-youros.log für Details."
 echo "[binutils-youros] Kompilieren..."
 make ${MAKEOPTS} &>> ${LOGS}/binutils-youros.log || die "Fehler beim Kompilieren.\nSiehe ${LOGS}/binutils-youros.log für Details."
 echo "[binutils-youros] Installieren..."
