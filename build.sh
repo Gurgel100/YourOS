@@ -80,7 +80,7 @@ if [ ${BUILD_DOCKER} = true ]; then
 	INCLUDE_DIR=${CROSSTOOLS_DIR}/include
 	mkdir -p ${INCLUDE_DIR} \
 	&& make -C ${KERNEL_SRC} SYSROOT_DIR=${CROSSTOOLS_DIR} install-headers \
-	&& docker build --pull -t youros ${CROSSTOOLS_DIR}
+	&& docker build --pull -t ghcr.io/gurgel100/youros-dev:latest ${CROSSTOOLS_DIR}
 	rm -r ${INCLUDE_DIR}
 else
 
