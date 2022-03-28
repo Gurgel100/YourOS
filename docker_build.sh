@@ -6,4 +6,4 @@ then
     TTY_PARAM="-it"
 fi
 
-docker run $TTY_PARAM --user $(id -u):$(id -g) -v "$(pwd)":/external youros ./build.sh -t /usr/local/youros $@
+docker run $TTY_PARAM --user $(id -u):$(id -g) -v "$(pwd)":/external youros $@
