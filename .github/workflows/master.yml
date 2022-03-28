@@ -1,0 +1,24 @@
+name: master
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build:
+    # Prevent running this on forks
+    if: github.repository_owner == 'Gurgel100'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+      - name: Build YourOS
+        run: ./docker_build.sh ./build.sh -r
+      - name: Upload a Build Artifact
+        uses: actions/upload-artifact@v3.0.0
+        with:
+          path: YourOS.iso
